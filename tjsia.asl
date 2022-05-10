@@ -5,7 +5,7 @@ state("tropicJim")
 
 startup
 {
-    vars.Log = (Action<object>)((output) => print("[Process ASL] " + output));
+    vars.Log = (Action<object>)((output) => print("[TJSIA ASL] " + output));
     vars.TimerModel = new TimerModel { CurrentState = timer };
 
     // Map from room id to descriptive room name, for settings
@@ -45,8 +45,8 @@ startup
         {17, new List<int>() {20}},
     };
 
-    vars.no_exit = (Function<int, int, bool>)((prev, new) => {
-        return no_exit.ContainsKey(prev) && no_exit[prev].Contains(new);
+    vars.no_exit = (Func<int, int, bool>)((prev, cur) => {
+        return no_exit.ContainsKey(prev) && no_exit[prev].Contains(cur);
     });
 
     // Default settings
@@ -88,11 +88,11 @@ split
             vars.final_room = true;
         }
         bool do_split = false;
+        bool realexit = !vars.no_exit(old.room_id, current.room_id);
         do_split  = settings["enter_"+current.room_id] && !vars.has_entered[current.room_id];
-        do_split |= settings["exit_"+old.room_id]      && !vars.has_exited[old.room_id] 
-                                                       && !vars.no_exit(old.room_id, current.room_id);
+        do_split |= settings["exit_"+old.room_id] && !vars.has_exited[old.room_id] && realexit;
         vars.has_entered[current.room_id] = true;
-        vars.has_exited[old.room_id] = true;
+        vars.has_exited[old.room_id] |= realexit;
         return do_split;
     }
     return false;
